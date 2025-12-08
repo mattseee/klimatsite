@@ -1,0 +1,38 @@
+// prisma/schema.prisma
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model Category {
+  id        Int        @id @default(autoincrement())
+  title     String
+  slug      String     @unique
+  parent    Category?  @relation("Subcategories", fields: [parentId], references: [id])
+  parentId  Int?
+  children  Category[] @relation("Subcategories")
+  products  Product[]
+}
+
+model Product {
+  id                   Int      @id @default(autoincrement())
+  title                String
+  slug                 String   @unique
+  categoryId           Int
+  category             Category @relation(fields: [categoryId], references: [id])
+  brand                String
+  article              String
+  price                Float
+  characteristics      String
+  image                String?
+  video                String?
+  promotional_materials String?
+  instructions         String?
+  barcode             String?
+  ns_code              String?
+}
