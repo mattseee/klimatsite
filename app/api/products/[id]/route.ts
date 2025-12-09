@@ -1,35 +1,34 @@
 // app/api/products/[id]/route.ts
 import { NextRequest, NextResponse } from 'next/server';
-import { query } from '../../../lib/db';
-import { ProductWithCategory } from '@/app/lib/types/database';
+import { query } from '@/app/lib/db';
 
 export async function GET(
-  request: NextRequest,
+  req: NextRequest,
+  // ⬇️ тут ВАЖНО: params НЕ Promise, просто объект
   { params }: { params: { id: string } }
 ) {
-  try {
-    const { id } = await params;
-    
-    const [product] = await query<ProductWithCategory[]>(`
-      SELECT p.*, c.name as category_name
-      FROM products p
-      LEFT JOIN categories c ON p.category_id = c.id
-      WHERE p.id = ?
-    `, [parseInt(id)]);
+  const idNum = Number(params.id);
 
-    if (!product) {
-      return NextResponse.json(
-        { error: 'Product not found' },
-        { status: 404 }
-      );
-    }
-
-    return NextResponse.json({ product });
-  } catch (error) {
-    console.error('Error fetching product:', error);
+  if (!Number.isFinite(idNum)) {
     return NextResponse.json(
-      { error: 'Failed to fetch product' },
-      { status: 500 }
+      { error: 'Invalid product id' },
+      { status: 400 }
     );
   }
+
+  const rows = await query<any>(
+    'SELECT * FROM products WHERE id = ? LIMIT 1',
+    [idNum],
+  );
+
+  const product = rows[0];
+
+  if (!product) {
+    return NextResponse.json(
+      { error: 'Product not found' },
+      { status: 404 }
+    );
+  }
+
+  return NextResponse.json(product);
 }
